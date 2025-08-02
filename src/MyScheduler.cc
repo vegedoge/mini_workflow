@@ -1,4 +1,5 @@
 #include "MyScheduler.h"
+#include "MyGoTask.h"
 #include <iostream>
 
 MyScheduler::MyScheduler() : stop_(false) {
@@ -60,7 +61,11 @@ void MyScheduler::worker_loop() {
 
     task->execute();
 
-    // destory the task obj, may use memory pool later
-    delete task;
+    // 只删除MyGoTask类型的任务，不删除MySeriesWork
+    // 可以通过dynamic_cast检查类型，或者添加任务类型标识
+    if (dynamic_cast<MyGoTask*>(task)) {
+      delete task;
+    }
+    // MySeriesWork由调用者管理生命周期
   }
 }

@@ -15,7 +15,7 @@ include_directories(include)
 find_package(Threads REQUIRED)
 
 # exec
-add_executable(mini_workflow_exe src/main.cc src/MyScheduler.cc)
+add_executable(mini_workflow_exe src/main.cc src/MyScheduler.cc src/MySeriesWork.cc)
 
 # linker
 target_link_libraries(mini_workflow_exe PRIVATE Threads::Threads)
