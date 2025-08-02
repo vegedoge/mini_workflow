@@ -2,16 +2,17 @@
 #define _MYSERIESWORK_H_
 
 #include <queue>
+#include <memory>
 #include <functional>
 #include "MyTask.h"
 #include "MyScheduler.h"
 
-class MySeriesWork : public MyTask {
+class MySeriesWork : public MyTask, public std::enable_shared_from_this<MySeriesWork> {
 public:
   MySeriesWork(MyScheduler *scheduler);
   virtual ~MySeriesWork();
 
-  void add_task(MyTask *task);
+  void add_task(std::shared_ptr<MyTask> task);
 
   virtual void execute() override;
 
@@ -23,10 +24,10 @@ private:
   void handle_next();
 
 private:
-  std::queue<MyTask *> tasks_;
+  std::queue<std::shared_ptr<MyTask>> tasks_;
   MyScheduler *scheduler_;
   std::function<void(MySeriesWork *)> series_callback_;
 };
 
 
-#endif
+#endif // _MYSERIESWORK_H_

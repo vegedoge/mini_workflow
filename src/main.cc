@@ -4,6 +4,7 @@
 */
 #include <iostream>
 #include <chrono>
+#include <memory>
 #include "MyScheduler.h"
 #include "MyGoTask.h"
 #include "MySeriesWork.h"
@@ -13,22 +14,22 @@ int main() {
   MyScheduler scheduler;
   MyWaitGroup wg(1); //等待一个任务，（我们的Series）完成
 
-  MySeriesWork *series = new MySeriesWork(&scheduler);
-
   // add 3 gotask
-  series->add_task(new MyGoTask([] {
-    printf("Step 1: reading the user profile...\n");
+  auto series = std::make_shared<MySeriesWork>(&scheduler);
+
+  series->add_task(std::make_shared<MyGoTask>([] {
+    printf("Step 1: Reading user profiles...\n");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }));
 
-  series->add_task(new MyGoTask([] {
-    printf("Step 1: reading the user's post...\n");
+  series->add_task(std::make_shared<MyGoTask>([] {
+    printf("Step 2: Reading user's posts...\n");
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
   }));
 
-  series->add_task(new MyGoTask([] {
-    printf("Step 1: computing...\n");
-    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  series->add_task(std::make_shared<MyGoTask>([] {
+    printf("Step 3: Computing...\n");
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }));
 
   // set callback for the whole series
@@ -42,9 +43,6 @@ int main() {
 
   wg.wait();
   printf("Main thread finished\n");
-
-  // 清理MySeriesWork对象
-  delete series;
 
   // wait for deconstructor to print(if any)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));

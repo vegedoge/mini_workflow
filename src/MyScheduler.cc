@@ -1,6 +1,7 @@
 #include "MyScheduler.h"
 #include "MyGoTask.h"
 #include <iostream>
+#include <memory>
 
 MyScheduler::MyScheduler() : stop_(false) {
   // get the number of hardware threads
@@ -30,7 +31,7 @@ MyScheduler::~MyScheduler() {
   std::cout << "Scheduler stopped" << '\n';
 }
 
-void MyScheduler::schedule(MyTask* task) {
+void MyScheduler::schedule(std::shared_ptr<MyTask> task) {
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
     tasks_.push(task);
@@ -41,7 +42,8 @@ void MyScheduler::schedule(MyTask* task) {
 
 void MyScheduler::worker_loop() {
   while(true) {
-    MyTask *task;
+    // use shared ptr 
+    std::shared_ptr<MyTask> task;
     {
       std::unique_lock<std::mutex> lock(queue_mutex_);
 
@@ -61,11 +63,7 @@ void MyScheduler::worker_loop() {
 
     task->execute();
 
-    // 只删除MyGoTask类型的任务，不删除MySeriesWork
-    // 可以通过dynamic_cast检查类型，或者添加任务类型标识
-    if (dynamic_cast<MyGoTask*>(task)) {
-      delete task;
-    }
-    // MySeriesWork由调用者管理生命周期
+    // shared ptr 会自动处理引用计数
+    // 不用delete
   }
 }

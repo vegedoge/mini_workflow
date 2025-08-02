@@ -1,3 +1,4 @@
+#include <memory>
 #include "MySeriesWork.h"
 
 MySeriesWork::MySeriesWork(MyScheduler* scheduler) : scheduler_(scheduler) {}
@@ -6,7 +7,7 @@ MySeriesWork::~MySeriesWork() {
   // clean logic to be added later
 }
 
-void MySeriesWork::add_task(MyTask* task) {
+void MySeriesWork::add_task(std::shared_ptr<MyTask> task) {
   tasks_.push(task);
 }
 
@@ -25,6 +26,7 @@ void MySeriesWork::handle_next() {
     // all sub tasks done,
     // trigger series call_back
     if (series_callback_) {
+      auto self = shared_from_this();   // 捕获this转换为shared ptr
       series_callback_(this);
     }
 
@@ -33,13 +35,16 @@ void MySeriesWork::handle_next() {
   }
 
   // get the next task
-  MyTask* next_task = tasks_.front();
+  std::shared_ptr<MyTask> next_task = tasks_.front();
   tasks_.pop();
 
   // 给下一个任务设置回调，回调就是继续call seriesWork的下一个任务
-  next_task->set_callback([this](MyTask* task) {
+  auto self = shared_from_this();
+  next_task->set_callback([self](MyTask *task)
+  {
     // 这个lambda在子任务完成时被调用
-    this->handle_next();
+    // shared_ptr确保存活周期
+    self->handle_next(); 
   });
 
   scheduler_->schedule(next_task);
