@@ -29,6 +29,23 @@ bool MyEpollPoller::add(int fd,
                         std::function<void()> write_cb, 
                         bool is_oneshot) {
   
+  // 检查是否已存在
+  bool exists = false;
+
+  {
+    std::lock_guard<std::mutex> lock(handlers_mutex_);
+    if (handlers_.find(fd) != handlers_.end())
+    {
+      exists = true;
+      // 已存在，改为 MOD
+      std::cout << "Already exists add, use mod" << std::endl;
+    }
+  }
+
+  if (exists) {
+    return mod(fd, std::move(read_cb), std::move(write_cb), is_oneshot);
+  }
+
   // epoll_event: 事件结构体
   epoll_event ev;
   ev.data.fd = fd;
@@ -51,6 +68,32 @@ bool MyEpollPoller::add(int fd,
   handlers_[fd] = {fd, std::move(read_cb), std::move(write_cb)};
   std::cout << "Added fd: " << fd << " to epoll" << std::endl;
 
+  return true;
+}
+
+bool MyEpollPoller::mod(int fd,
+                        std::function<void()> read_cb,
+                        std::function<void()> write_cb,
+                        bool is_oneshot ) {
+  struct epoll_event ev;
+  ev.data.fd = fd;
+  ev.events = EPOLLIN | EPOLLOUT | EPOLLET;    // 保持读写事件监听
+  if (is_oneshot) {
+    ev.events |= EPOLLONESHOT;
+  }
+
+  if (epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &ev) == -1) {
+    perror("epoll_ctl: mod");
+    return false;
+  }
+
+  std::lock_guard<std::mutex> lock(handlers_mutex_);
+  auto it = handlers_.find(fd);
+  if (it != handlers_.end()) {
+    it->second.read_handler = std::move(read_cb);
+    it->second.write_handler = std::move(write_cb);
+  }
+  std::cout << "Modified fd:" << fd << std::endl;
   return true;
 }
 
@@ -92,12 +135,14 @@ void MyEpollPoller::poller_loop() {
           continue;
         }
 
-        // readable or writable event
-        if (events[i].events & EPOLLIN) {
-          handler_func = it->second.read_handler;
-        } else if (events[i].events & EPOLLOUT) {
-          handler_func = it->second.write_handler;
-        }
+              // readable or writable event
+      if (events[i].events & EPOLLIN) {
+        handler_func = it->second.read_handler;
+        std::cout << "EPOLLIN event triggered for fd: " << fd << std::endl;
+      } else if (events[i].events & EPOLLOUT) {
+        handler_func = it->second.write_handler;
+        std::cout << "EPOLLOUT event triggered for fd: " << fd << std::endl;
+      }
       }
 
       if (handler_func) {

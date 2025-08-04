@@ -29,11 +29,18 @@ public:
   MyEpollPoller &operator=(const MyEpollPoller &) = delete;
 
   // 事件监听
-  // 增加和修改
+  // 增加
   bool add(int fd,
            std::function<void()> read_cb,   // 可读cb 
            std::function<void()> write_cb,  // 可写cb
            bool is_oneshot);
+  
+  // 修改
+  bool mod(int fd,
+           std::function<void()> read_cb,   // 可读cb 
+           std::function<void()> write_cb,  // 可写cb
+           bool is_oneshot);
+
   // 删除
   bool del(int fd);
 
