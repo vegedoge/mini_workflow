@@ -1,6 +1,6 @@
 # 学习记录
 
-## 第五章 TaskFactory
+## 第五章 ComplexTasks
 
 ### 5.1 TaskFactory
 
@@ -43,3 +43,23 @@
 
 + recycle\_go\_task: 把task重新塞回pool里。
 
+### 5.2 ParallelWork
+
+#### 5.2.1 MyParallelWork
+
+并发执行多个subTask，完成之后触发回调。对应WFCounterTask。
+
++ counter\_: 使用atomic counter来追踪子任务完成
++ execute(): 启动所有子任务，用sub\_task\_done()汇报完成
++ sub\_task\_done(): 最后一个完成者模式
+
+```cpp
+  if (--counter_ == 0) {
+    if (parallel_callback_) {
+      parallel_callback_(this);    
+    }
+    this->done();
+  }
+```
+
+这里外接设置callback的时候 先捕捉可调用对象 然后执行对象 然后再执行callback里面的lambda内容。
