@@ -63,7 +63,10 @@ void MyScheduler::worker_loop() {
 
     task->execute();
 
-    // shared ptr 会自动处理引用计数
+    // 1.0: shared ptr 会自动处理引用计数
     // 不用delete
+
+    // 2.0: 内存池 不销毁而回收
+    task->recycle();
   }
 }

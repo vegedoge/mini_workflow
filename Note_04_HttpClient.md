@@ -2,7 +2,7 @@
 
 ## 第四章 HttpClient
 
-### 3.1 MyHttpClientTask
+### 4.1 MyHttpClientTask
 
 作为一个Task,首先保有了对MyTask的继承,使用事件驱动：  
 
@@ -11,7 +11,7 @@
 + read: 接收http响应
 + done: 触发回调
 
-#### 3.1.1 http协议
+#### 4.1.1 http协议
 
 + url 统一资源定位符
   
@@ -40,7 +40,7 @@
   + PUT: 更新资源
   + DELETE: 删除资源
 
-#### 3.1.2 Http connect flow
+#### 4.1.2 Http connect flow
 
 ```cpp
 execute()
