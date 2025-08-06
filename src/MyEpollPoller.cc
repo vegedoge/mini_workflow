@@ -98,12 +98,21 @@ bool MyEpollPoller::mod(int fd,
 }
 
 bool MyEpollPoller::del(int fd) {
+  std::lock_guard<std::mutex> lock(handlers_mutex_);
+  
+  // 检查文件描述符是否已经存在
+  auto it = handlers_.find(fd);
+  if (it == handlers_.end()) {
+    // 文件描述符已经被删除，避免重复删除
+    return true;
+  }
+  
+  // 从 epoll 中删除
   if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, nullptr) == -1) {
     perror("epoll_ctl: del");
   }
 
-  std::lock_guard<std::mutex> lock(handlers_mutex_);
-  // del fd
+  // 从 handlers_ 中删除
   handlers_.erase(fd);
 
   return true;

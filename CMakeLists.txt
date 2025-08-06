@@ -8,6 +8,10 @@ project(mini_workflow)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# debug 
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+
 # include
 include_directories(include)
 
@@ -16,7 +20,8 @@ find_package(Threads REQUIRED)
 
 # exec
 add_executable(mini_workflow_exe src/main.cc src/MyScheduler.cc src/MySeriesWork.cc
-                src/MyEpollPoller.cc src/MyHttpClientTask.cc)
+                src/MyEpollPoller.cc src/MyHttpClientTask.cc src/MyTaskFactory.cc
+                src/MyParallelWork.cc)
 
 # linker
 target_link_libraries(mini_workflow_exe PRIVATE Threads::Threads)

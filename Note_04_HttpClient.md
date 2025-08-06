@@ -61,4 +61,10 @@ handle_connect()    poller 监听 sockfd_ 可写
                         ↓
                   连接成功 → handle_connect()
 ```
-  
+
+#### 4.1.3 Clean up
+
+给HttpClient添加了一个clean\_up\_标志位，如果已经清理过 fd无效 此时不用再重复执行close()  
+
+原因是我只用了一个Poller,然后不同的Task都用这个Poller,所以可能存在竞态，给del添加检查可以避免重复删除，或者改成每个io线程绑定一个Poller。  
+

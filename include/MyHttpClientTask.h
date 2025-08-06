@@ -36,6 +36,7 @@ private:
 
   int sockfd_;
   std::string response_;
+  bool cleaned_up_;  // 防止重复清理的标志
 };
 
 #endif

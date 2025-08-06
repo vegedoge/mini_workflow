@@ -39,7 +39,7 @@ static bool parse_url(const std::string& url, std::string& host, int& port, std:
 }
 
 MyHttpClientTask::MyHttpClientTask(MyScheduler* scheduler, MyEpollPoller* poller, std::string url) 
-  : scheduler_(scheduler), poller_(poller), url_(std::move(url)), sockfd_(-1)
+  : scheduler_(scheduler), poller_(poller), url_(std::move(url)), sockfd_(-1), cleaned_up_(false)
 {
   if (!parse_url(url_, host_, port_, path_)) {
     // error handling
@@ -109,44 +109,72 @@ void MyHttpClientTask::handle_connect() {
 }
 
 void MyHttpClientTask::handle_read() {
+  // 如果已经清理过了，直接返回
+  if (cleaned_up_) {
+    return;
+  }
+  
   std::cout << "handle_read() called, sockfd: " << sockfd_ << std::endl;
   
   char buf[4096];
-  ssize_t n; //有符号
-  while ((n = read(sockfd_, buf, sizeof(buf))) > 0) {
-    response_.append(buf, n);
-    std::cout << "Read " << n << " bytes, total response size: " << response_.length() << std::endl;
+  ssize_t total_read = 0;
+  
+  // 读取所有可用数据
+  while (true) {
+    ssize_t n = read(sockfd_, buf, sizeof(buf));
+    
+    if (n > 0) {
+      response_.append(buf, n);
+      total_read += n;
+      std::cout << "Read " << n << " bytes, total response size: " << response_.length() << std::endl;
+    } else if (n == 0) {
+      // 连接关闭
+      std::cout << "Connection closed by server, finishing task" << std::endl;
+      if (!cleaned_up_) {
+        cleaned_up_ = true;
+        poller_->del(sockfd_);
+        close(sockfd_);
+      }
+      this->done();
+      return;
+    } else if (n == -1) {
+      if (errno == EAGAIN) {
+        // 暂时没有更多数据
+        break;
+      } else {
+        // 其他错误
+        std::cout << "Read error, errno=" << errno << std::endl;
+        if (!cleaned_up_) {
+          cleaned_up_ = true;
+          poller_->del(sockfd_);
+          close(sockfd_);
+        }
+        this->done();
+        return;
+      }
+    }
   }
-
-  // if read returns 0/-1, except for EAGAIN, finish
-  if (n == 0 || (n == -1 && errno != EAGAIN)) {
-    std::cout << "Read finished, n=" << n << ", errno=" << errno << std::endl;
-    poller_->del(sockfd_);
-    close(sockfd_);
-    this->done();
-    return;
-  }
-
-  // n == -1 && errno == EAGAIN: 暂时没有更多数据
-  std::cout << "Read EAGAIN, checking if response is complete..." << std::endl;
   
   // 检查是否已经收到了完整的HTTP响应
-  // 简单的检查：如果响应包含 "\r\n\r\n" 且长度合理，认为响应完成
   if (response_.find("\r\n\r\n") != std::string::npos && response_.length() > 100) {
     std::cout << "HTTP response appears complete, finishing task" << std::endl;
-    poller_->del(sockfd_);
-    close(sockfd_);
+    if (!cleaned_up_) {
+      cleaned_up_ = true;
+      poller_->del(sockfd_);
+      close(sockfd_);
+    }
     this->done();
     return;
   }
   
-  // 否则继续等待更多数据
+  // 继续等待更多数据
   std::cout << "Continuing to wait for more data..." << std::endl;
 }
 
 void MyHttpClientTask::handle_error() {
   std::cerr << "Task error: " << strerror(errno) << std::endl;
-  if (sockfd_ != -1) {
+  if (sockfd_ != -1 && !cleaned_up_) {
+    cleaned_up_ = true;
     poller_->del(sockfd_);
     close(sockfd_);
   }
