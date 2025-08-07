@@ -19,11 +19,33 @@ include_directories(include)
 find_package(Threads REQUIRED)
 
 # exec
-add_executable(mini_workflow_exe src/main.cc src/MyScheduler.cc src/MySeriesWork.cc
-                src/MyEpollPoller.cc src/MyHttpClientTask.cc src/MyTaskFactory.cc
-                src/MyParallelWork.cc)
+add_executable(mini_workflow_exe 
+            src/main.cc 
+            src/MyScheduler.cc 
+            src/MySeriesWork.cc
+            src/MyEpollPoller.cc 
+            src/MyHttpClientTask.cc 
+            src/MyTaskFactory.cc
+            src/MyParallelWork.cc
+            src/HttpMessages.cc 
+            src/MyHttpServer.cc)
 
-# linker
+# test
+add_executable(test_http_server 
+            src/test_http_server.cc
+            src/MyScheduler.cc 
+            src/MySeriesWork.cc
+            src/MyEpollPoller.cc 
+            src/MyHttpClientTask.cc 
+            src/MyTaskFactory.cc
+            src/MyParallelWork.cc
+            src/HttpMessages.cc 
+            src/MyHttpServer.cc)
+
+
+# linkers
 target_link_libraries(mini_workflow_exe PRIVATE Threads::Threads)
+# test
+target_link_libraries(test_http_server PRIVATE Threads::Threads)
 
 message(STATUS "Executable is located at: ${CMAKE_BINARY_DIR}/mini_workflow_exe")
