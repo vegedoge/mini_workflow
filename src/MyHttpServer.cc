@@ -1,6 +1,7 @@
 #include "MyHttpServer.h"
 #include "MySeriesWork.h"
 #include "MyGoTask.h"
+#include "HttpMessages.h"
 // more headers to be added later
 
 #include <sys/socket.h>
@@ -9,12 +10,6 @@
 #include <arpa/inet.h>  // 功能：提供Internet地址族的定义
 #include <iostream>
 
-struct HttpContext {
-  int fd; 
-  HttpRequest request;
-  HttpResponse response;
-  std::string request_buffer;   // 累积读取的数据
-};
 
 // 内部任务: 读取解析HTTP请求
 class HttpReadTask : public MyTask, public std::enable_shared_from_this<HttpReadTask> {

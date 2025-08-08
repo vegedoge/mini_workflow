@@ -6,6 +6,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <openssl/ssl.h>
+
 // case Insensitive
 struct CaseInsensitiveCompare {
   bool operator()(const std::string& a, const std::string& b) const{
@@ -17,6 +19,14 @@ struct CaseInsensitiveCompare {
       }
     );
   }
+};
+
+struct HttpContext {
+  int fd; 
+  HttpRequest request;
+  HttpResponse response;
+  std::string request_buffer;   // 累积读取的数据
+  SSL *ssl = nullptr;           // 连接独有的SSL会话对象
 };
 
 struct HttpRequest {

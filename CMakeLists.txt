@@ -17,6 +17,7 @@ include_directories(include)
 
 # find
 find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # exec
 add_executable(mini_workflow_exe 
@@ -44,8 +45,8 @@ add_executable(test_http_server
 
 
 # linkers
-target_link_libraries(mini_workflow_exe PRIVATE Threads::Threads)
+target_link_libraries(mini_workflow_exe PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
 # test
-target_link_libraries(test_http_server PRIVATE Threads::Threads)
+target_link_libraries(test_http_server PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
 
 message(STATUS "Executable is located at: ${CMAKE_BINARY_DIR}/mini_workflow_exe")
