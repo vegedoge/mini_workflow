@@ -107,3 +107,25 @@ Client → TCP 连接 → accept() → 创建 SeriesWork
   3. 创建服务流水线SeriesWork
   4. 在流水线添加request->func->response流程
   5. 调度执行
+
+#### 6.1.6 Debug
+
+server跑起来之后发现一个问题 就是我可以正常解析 但是如果处理过http请求再Ctrl C，程序不停止，看起来是子线程无限循环了。  
+使用gdb run然后用curl 连接一次。此时
+
+```bash
+info threads/   therad apply all bt
+```
+
+查看所有线程调用栈  
+发现是handle\_accept里面使用的while(true)循环，导致里面的accept()一直在等待新的连接，所以这个线程就卡住了。
+
++ 阻塞listen\_fd: accept会block 直到有新连接
++ 非阻塞listen\_fd: accept会立即返回，无连接errno == EAGAIN
+
+```cpp
+listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); 
+int conn_fd = accept4(listen_fd_, (sockaddr *)&client_addr, &client_len, SOCK_NONBLOCK);
+```
+
+这里我们改成non-block的套接字 成功实现非阻塞

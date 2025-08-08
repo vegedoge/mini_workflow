@@ -124,7 +124,7 @@ void MyHttpClientTask::handle_read() {
     ssize_t n = read(sockfd_, buf, sizeof(buf));
     
     if (n > 0) {
-      response_.append(buf, n);
+    response_.append(buf, n);
       total_read += n;
       std::cout << "Read " << n << " bytes, total response size: " << response_.length() << std::endl;
     } else if (n == 0) {
@@ -160,8 +160,8 @@ void MyHttpClientTask::handle_read() {
     std::cout << "HTTP response appears complete, finishing task" << std::endl;
     if (!cleaned_up_) {
       cleaned_up_ = true;
-      poller_->del(sockfd_);
-      close(sockfd_);
+    poller_->del(sockfd_);
+    close(sockfd_);
     }
     this->done();
     return;

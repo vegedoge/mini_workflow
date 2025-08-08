@@ -19,8 +19,11 @@ MyEpollPoller::MyEpollPoller(MyScheduler* scheduler)
 }
 
 MyEpollPoller::~MyEpollPoller() {
+  printf("[Poller] Destructor called. Stopping poller...\n");
   stop_flag_.store(true);
+  printf("[Poller] Joining poller thread...\n");
   poller_thread_.join();
+  printf("[Poller] Poller thread joined. Destructor finished...\n");
   close(epoll_fd_);
 }
 

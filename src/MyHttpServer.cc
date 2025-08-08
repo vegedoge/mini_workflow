@@ -125,7 +125,8 @@ MyHttpServer::MyHttpServer(MyScheduler* scheduler, MyEpollPoller* poller)
 
 void MyHttpServer::start(unsigned short port, HttpProcessCallback process_callback) {
   process_callback_ = std::move(process_callback);
-  listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+  // listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+  listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);   // 改成non-block
 
   sockaddr_in serv_addr;        // 服务器地址
   serv_addr.sin_family = AF_INET;   // IPv4
@@ -172,14 +173,23 @@ void MyHttpServer::handle_accept() {
 
   // ET模式，循环accept直到出错
   // ET: 边缘触发
+  // 我们保留while(true)给ET，但是提供快速break
   while(true) {
-    int conn_fd = accept(listen_fd_, (sockaddr *)&client_addr, &client_len);
+
+    // *** 这个没有新连接的话会一直卡住 哪怕主线程被ctrl C了 ***
+    // *** 改成non-block的socket 并且改成non-block的accept 解决 ***
+    // int conn_fd = accept(listen_fd_, (sockaddr *)&client_addr, &client_len);
+    int conn_fd = accept4(listen_fd_, (sockaddr *)&client_addr, &client_len, SOCK_NONBLOCK); // 改用asynic I/O
+    
     if (conn_fd < 0) {
       // EAGAIN 代表没再多连接了 退出
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
         break;
-      perror("accept");
-      continue;
+      } else {
+        perror("accept");
+        // continue;
+        break;
+      }
     }
 
     // create a new workflow for new conn

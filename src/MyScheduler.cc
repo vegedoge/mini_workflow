@@ -18,6 +18,8 @@ MyScheduler::MyScheduler() : stop_(false) {
 }
 
 MyScheduler::~MyScheduler() {
+  std::cout << "[Scheduler] Destructor called. Stopping scheduler..." << std::endl;
+  
   // stop
   stop_.store(true);
 
@@ -25,13 +27,21 @@ MyScheduler::~MyScheduler() {
   condition_.notify_all();
 
   // wait and join all worker threads
-  for (std::thread& worker : workers_) {
-    worker.join();
+  for (size_t i = 0; i < workers_.size(); ++i) {
+    printf("[Scheduler] Joining thread %zu/%zu (%p)...\n", i+1, workers_.size(), workers_[i].get_id());
+    workers_[i].join();
+    printf("[Scheduler] Thread %zu joined.\n", i+1);
   }
-  std::cout << "Scheduler stopped" << '\n';
+  std::cout << "[Scheduler] Scheduler stopped" << '\n';
 }
 
 void MyScheduler::schedule(std::shared_ptr<MyTask> task) {
+  // reject if stop confirmed
+  if (stop_.load()) {
+    printf("[Scheduler] Warning: Scheduling task on a stopped scheduler. Task rejected.\n");
+    return;
+  }
+  
   {
     std::unique_lock<std::mutex> lock(queue_mutex_);
     tasks_.push(task);
@@ -67,6 +77,9 @@ void MyScheduler::worker_loop() {
     // 不用delete
 
     // 2.0: 内存池 不销毁而回收
-    task->recycle();
+    // 只有在调度器没有停止时才回收任务
+    if (!stop_.load()) {
+      task->recycle();
+    }
   }
 }
