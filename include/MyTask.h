@@ -18,9 +18,9 @@ public:
     this->callback_ = std::move(cb);
   }
 
-  // shared_ptr will help recycle
   virtual void recycle() {
     // tasks without pooling will do nothing.
+    // shared_ptr will help recycle
   }
 
 protected:

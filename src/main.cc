@@ -44,23 +44,23 @@ int main() {
     printf("Parallel: all tasks finished.\n");
   });
 
-series->add_task(parallel);
+  series->add_task(parallel);
 
-// task 3: final task
-series->add_task(MyTaskFactory::create_go_task([] {
-  printf("Sereis: all parallel work is done... \n");
-}));
+  // task 3: final task
+  series->add_task(MyTaskFactory::create_go_task([] {
+    printf("Sereis: all parallel work is done... \n");
+  }));
 
-series->set_series_callback([&wg](MySeriesWork* s) {
-  printf("Series: whole series finished. \n");
-  wg.done();  // 通知 WaitGroup 任务完成
-});
+  series->set_series_callback([&wg](MySeriesWork* s) {
+    printf("Series: whole series finished. \n");
+    wg.done();  // 通知 WaitGroup 任务完成
+  });
 
-scheduler.schedule(series);
+  scheduler.schedule(series);
 
-wg.wait();
-printf("Main thread finished.\n");
-std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  wg.wait();
+  printf("Main thread finished.\n");
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
-return 0;
+  return 0;
 }

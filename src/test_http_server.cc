@@ -1,12 +1,14 @@
 #include <iostream>
 #include <memory>
 #include <csignal>
+#include <chrono>
 #include "MyScheduler.h"
 #include "MyEpollPoller.h"
 #include "MyHttpServer.h"
 
 static bool running = true;
 void sig_handler(int sig) {
+  std::cout << "Received shutdown signal" << std::endl;
   running = false;
 }
 
@@ -53,6 +55,8 @@ int main() {
 
   server.stop();
   printf("Server shutdown.\n");
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   return 0;
 }

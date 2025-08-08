@@ -36,7 +36,7 @@ struct HttpResponse {
   // serialize self to http response string
   std::string to_string() const {
     std::stringstream ss;
-    ss << "HTTP/1.1" << status_code << " " << status_message << "\r\n";
+    ss << "HTTP/1.1 " << status_code << " " << status_message << "\r\n";
     // 输出用户设置的headers
     for (const auto& header : headers) {
       ss << header.first << ": " << header.second << "\r\n";
